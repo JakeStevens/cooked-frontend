@@ -11,13 +11,15 @@ class ApiService {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Construct a more informative error message
+        const errorBody = await response.text(); // Try to get error body
+        throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}, body: ${errorBody}`);
       }
-      
+
       const data = await response.json();
-      console.log('API Response:', data);
+      console.log('API GET Response:', data);
       return data;
     } catch (error) {
       console.error('API GET error:', error);
@@ -27,7 +29,7 @@ class ApiService {
 
   async post(endpoint, data) {
     try {
-      console.log(`Making POST request to: ${API_BASE_URL}${endpoint}`);
+      console.log(`Making POST request (JSON) to: ${API_BASE_URL}${endpoint}`);
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: {
@@ -35,16 +37,45 @@ class ApiService {
         },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorBody = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}, body: ${errorBody}`);
       }
-      
+
       const result = await response.json();
-      console.log('API Response:', result);
+      console.log('API POST (JSON) Response:', result);
       return result;
     } catch (error) {
-      console.error('API POST error:', error);
+      console.error('API POST (JSON) error:', error);
+      throw error;
+    }
+  }
+
+  async uploadImage(endpoint, file) {
+    try {
+      console.log(`Making POST request (file upload) to: ${API_BASE_URL}${endpoint}`);
+      const formData = new FormData();
+      formData.append('image', file); // 'image' is a common field name for the file
+
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        // NOTE: Do NOT set 'Content-Type' manually for FormData.
+        // The browser will automatically set it to 'multipart/form-data'
+        // with the correct boundary.
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}, body: ${errorBody}`);
+      }
+
+      const result = await response.json(); // Assuming the backend responds with JSON
+      console.log('API File Upload Response:', result);
+      return result;
+    } catch (error) {
+      console.error('API File Upload error:', error);
       throw error;
     }
   }
